@@ -1,5 +1,5 @@
 package Games::Cellulo::Game::Screen;
-$Games::Cellulo::Game::Screen::VERSION = '0.2_01';
+$Games::Cellulo::Game::Screen::VERSION = '0.21';
 use strict;
 use warnings FATAL => 'all';
 

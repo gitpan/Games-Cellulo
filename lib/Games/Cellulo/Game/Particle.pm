@@ -1,5 +1,5 @@
 package Games::Cellulo::Game::Particle;
-$Games::Cellulo::Game::Particle::VERSION = '0.2_01';
+$Games::Cellulo::Game::Particle::VERSION = '0.21';
 use strict;
 use warnings FATAL => 'all';
 
@@ -17,9 +17,12 @@ has x => ( is => 'rw', required => 1 );
 has y => ( is => 'rw', required => 1 );
 has type => ( is => 'rw', required => 1 );
 
-has xdir => ( is => 'lazy', clearer => 1 );
-has ydir => ( is => 'lazy', clearer => 1  );
+has xdir => ( is => 'rw', lazy => 1, builder => 1, clearer => 1 );
+has ydir => ( is => 'rw', lazy => 1, builder => 1, clearer => 1 );
 has char => ( is => 'lazy', clearer => 1 );
+has clump => ( is => 'ro', );
+has grayscale => ( is => 'ro', );
+has rainbow => ( is => 'ro', );
 
 sub _build_xdir {
     for( $_[0]->type ) {
@@ -51,6 +54,13 @@ sub _cc {
 
 sub _build_char {
     my $self = shift;
+    my $st = 32;
+    $st = 232 if( $self->grayscale );
+    if ( $self->grayscale || $self->rainbow ) {
+        my $r   = int( rand( 256 - $st ) );
+        my $col = $st + $r;
+        return sprintf "\x1b[48;5;${col}m \x1b[0m", 'o';
+    }
     return _cc( 'blue',   'o' ) if $self->type eq B;
     return _cc( 'red',    'o' ) if $self->type eq R;
     return _cc( 'green',  'o' ) if $self->type eq G;
@@ -105,7 +115,8 @@ sub p_found_free_path {
     my $self = shift;
     my $num_tries = $self->num_avoid_tries;
     my $num_successes = $self->num_successes;
-    return .5 unless $num_successes;
+    return rand(1) unless $num_successes;
+    return rand(1) unless $num_tries;
     return $num_tries / $num_successes;
 }
 
@@ -113,7 +124,8 @@ sub p_went_in_direction {
     my( $self, $direction ) = @_;
     my $num_tries_in_direction = $self->tries_in_direction->{$direction};
     my $num_tries = $self->num_avoid_tries;
-    return .5 unless $num_tries;
+    return rand(1) unless $num_tries;
+    return rand(1) unless $num_tries_in_direction;
     return $num_tries_in_direction / $num_tries;
 }
 
@@ -121,18 +133,23 @@ sub p_found_free_path_went_in_direction_x {
     my( $self, $direction ) = @_;
     my $num_avoid_successes = $self->num_successes;
     my $num_avoid_successes_in_direction = $self->successes_in_direction->{$direction};
-    return .5 unless $num_avoid_successes;
+    return rand(1) unless $num_avoid_successes;
+    return rand(1) unless $num_avoid_successes_in_direction;
     return $num_avoid_successes_in_direction / $num_avoid_successes;
 }
 sub p_went_in_direction_x_found_free_path {
     my( $self, $direction ) = @_;
     my $p_found_free_path = $self->p_found_free_path;
     my $p_went_in_direction = $self->p_went_in_direction( $direction );
+#    warn $p_went_in_direction;
     my $p_found_free_path_went_in_direction_x = $self->p_found_free_path_went_in_direction_x( $direction );
-    return .5 unless $p_found_free_path;
-    return .5 unless $p_found_free_path_went_in_direction_x;
-    return .5 unless $p_went_in_direction;
-    return ( $p_found_free_path_went_in_direction_x * $p_went_in_direction ) / $p_found_free_path;
+    my $rand = rand(1);
+    return $rand unless $p_found_free_path;
+    return $rand unless $p_found_free_path_went_in_direction_x;
+    return $rand unless $p_went_in_direction;
+    my $ret = ( $p_found_free_path_went_in_direction_x * $p_went_in_direction ) / $p_found_free_path;
+    return 1 - $ret if $self->clump;
+    return $ret;
 
 }
 sub avoidx {

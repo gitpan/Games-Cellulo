@@ -10,7 +10,7 @@ use ExtUtils::MakeMaker ;
 
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "Cellulo Automatonata",
+  "ABSTRACT" => "Cellular Automata Visualisation",
   "AUTHOR" => "Samuel Kaufman <skaufman\@cpan.org>",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0
@@ -40,7 +40,7 @@ my %WriteMakefileArgs = (
     "IPC::Open3" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.2_01",
+  "VERSION" => "0.21",
   "test" => {
     "TESTS" => "t/*.t"
   }

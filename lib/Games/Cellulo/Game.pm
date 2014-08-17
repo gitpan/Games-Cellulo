@@ -1,5 +1,5 @@
 package Games::Cellulo::Game;
-$Games::Cellulo::Game::VERSION = '0.2_01';
+$Games::Cellulo::Game::VERSION = '0.21';
 use strict;
 use warnings FATAL => 'all';
 use Games::Cellulo::Game::Screen;
@@ -9,6 +9,7 @@ use Games::Cellulo::Game::Particle;
 use Moo;
 use MooX::Options;
 
+open( my $fh, ">", "$ENV{HOME}/cellulo.log" ) or die "$@ $!";
 has screen => ( is => 'lazy', handles => [qw/ grid /] );
 
 option sleep_time => (
@@ -30,15 +31,52 @@ option meld => (
     doc => 'particles should turn in to each other when stuck'
 );
 
-has screen_args => ( 
+option clump => (
+    is => 'ro',
+    doc => 'clump instead of avoid',
+);
+
+option ramp => (
+    is => 'ro',
+    doc => 'add particles on collision',
+);
+option behavior => (
+    is => 'ro',
+    format => 'i',
+    default => sub { 3 },
+    doc => "
+        1: go straight, avoid only on collision
+        2: meld, on collision switch to new type
+        3: adopt direction of avoid path
+    "
+);
+
+option randomize_clump => (
+    is => 'ro',
+    default => 'each particle gets a random clump val',
+);
+
+option grayscale => (
+    is => 'ro',
+    doc => 'grayscale colors',
+);
+
+option rainbow => (
+    is => 'ro',
+    doc => 'rainbow colors',
+);
+
+has screen_args => (
     is => 'ro',
     default => sub { +{} },
 );
 
-has particles => ( 
+has particles => (
     is => 'rw',
     default => sub { [] },
 );
+
+
 sub _rand_dir {
     int( rand(3) ) - 1;
 }
@@ -59,27 +97,34 @@ sub randy {
 
 }
 
+sub maybe_add_particle {
+    my $self = shift;
+    my $randy = $self->randy;
+    my $randx = $self->randx;
+    my $rows  = $self->screen->rows;
+    my $cols  = $self->screen->cols;
+    my $grid  = $self->screen->grid;
+    my $clump = $self->clump;
+    if( $self->randomize_clump ) {
+        $clump = int( rand( 1 ) );
+    }
+    return if $grid->[$randy][$randx];
+    $grid->[$randy][$randx] = Games::Cellulo::Game::Particle->new(
+        rows  => $rows,
+        cols  => $cols,
+        x     => $randx,
+        y     => $randy,
+        type  => int( rand(4) + 1 ),
+        clump => $clump,
+        grayscale => $self->grayscale,
+        rainbow => $self->rainbow,
+    );
+    push( @{ $self->particles }, $grid->[$randy][$randx] );
+}
 sub init {
     my $self = shift;
-    my $rows = $self->screen->rows;
-    my $cols = $self->screen->cols;
     $self->screen->clrscr;
-    my $grid = $self->screen->grid;
-    my @particles;
-    for ( 1 .. $self->num_particles ) {
-        my $randy = $self->randy;
-        my $randx = $self->randx;
-        next if $grid->[$randy][$randx];
-        $grid->[$randy][$randx] = Games::Cellulo::Game::Particle->new(
-            rows => $rows,
-            cols => $cols,
-            x    => $randx,
-            y    => $randy,
-            type => int( rand(4) + 1 ),
-        );
-        push( @particles, $grid->[$randy][$randx] );
-    }
-    $self->particles( \@particles );
+     $self->maybe_add_particle for ( 1 .. $self->num_particles );
 }
 my $_moves = 0;
 sub moves{ $_moves }
@@ -87,8 +132,11 @@ sub play {
     my $self = shift;
     my $_scr = $self->screen;
     my $sleep_time = $self->sleep_time;
+    my $screen = $self->screen;
+    my $grid  = $screen->grid;
     while( !$_scr->key_pressed ) {
-        $self->draw;
+        $self->move_particles($screen,$grid);
+        $self->draw_grid;
         Time::HiRes::sleep $sleep_time;
         $_moves++;
     }
@@ -117,9 +165,7 @@ my $_move = sub {
 };
 
 sub move_particles {
-    my $self  = shift;
-    my $screen = $self->screen;
-    my $grid  = $screen->grid;
+    my ($self,$screen,$grid) = @_;
     for ( @{ $self->particles } ) {
         my $wantx = $screen->xpos( $_->x + $_->xdir );
         my $wanty = $screen->ypos( $_->y + $_->ydir );
@@ -127,6 +173,7 @@ sub move_particles {
             $_move->( $_, $wantx, $wanty, $grid );
         }
         else {
+            $self->maybe_add_particle if $self->ramp;
             my $avoid_dir = $_->avoid_dir;
             next unless $avoid_dir;
             my $avoid_dir_string = join ',' => @$avoid_dir;
@@ -138,12 +185,17 @@ sub move_particles {
                 $_move->( $_, $wantx, $wanty, $grid );
                 $_->successes_in_direction->{$avoid_dir_string}++;
                 $_->num_successes( $_->num_successes+1 );
-            } elsif( $self->meld ) {
+                print $fh $avoid_dir_string,"\n";
+                if( $self->behavior == 3 ) {
+                    $_->xdir( $avoid_dir->[0] );
+                    $_->ydir( $avoid_dir->[1] );
+                }
+            } elsif( $self->meld) {
                 $_->type( $grid->[$wanty][$wantx]->type );
                 $_->clear_xdir;
                 $_->clear_ydir;
                 $_->clear_char;
-            }
+            } 
         }
     }
 }
@@ -151,9 +203,6 @@ sub move_particles {
 sub draw {
     my $self = shift;
 #   $self->screen->at(0,0);
-    $self->move_particles;
-#    $self->screen->reset_grid;
-    $self->draw_grid;
 }
 
 1;

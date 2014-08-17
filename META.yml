@@ -1,5 +1,5 @@
 ---
-abstract: 'Cellulo Automatonata'
+abstract: 'Cellular Automata Visualisation'
 author:
   - 'Samuel Kaufman <skaufman@cpan.org>'
 build_requires:
@@ -31,5 +31,5 @@ requires:
 resources:
   bugtracker: https://github.com/ediblenergy/Games-Cellulo/issues
   repository: https://github.com/ediblenergy/Games-Cellulo.git
-version: 0.2_01
+version: 0.21
 x_authority: cpan:SKAUFMAN

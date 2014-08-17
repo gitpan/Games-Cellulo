@@ -23,7 +23,7 @@ __END__
 
 =head1 NAME
 
-cellulo - Cellulo Automatonata
+cellulo - Cellular Automata Visualisation
 
 =head1 SYNOPSIS
 
@@ -35,25 +35,44 @@ OR
 
 =head1 USAGE
 
-cellulo [-h] [long options...]
+USAGE: cellulo [-h] [long options...]
+
+    --behavior: Int
+
+                1: go straight, avoid only on collision
+                2: meld, on collision switch to new type
+                3: adopt direction of avoid path
+
+    --clump:
+        clump instead of avoid
+
+    --grayscale:
+        no doc for grayscale
 
     --meld:
         particles should turn in to each other when stuck
-    
+
     --num_particles: Int
         number of onscreen particles
-    
+
+    --ramp:
+        add particles on collision
+
+    --randomize_clump:
+        no doc for randomize_clump
+
     --sleep_time: String
         time to sleep between frames
-    
+
     --usage:
         show a short help message
-    
+
     -h --help:
         show a help message
-    
+
     --man:
         show the manual
+
 
 =head1 DESCRIPTION
 
