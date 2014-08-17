@@ -1,5 +1,5 @@
 package Games::Cellulo::Game;
-$Games::Cellulo::Game::VERSION = '0.21';
+$Games::Cellulo::Game::VERSION = '0.22';
 use strict;
 use warnings FATAL => 'all';
 use Games::Cellulo::Game::Screen;
@@ -9,7 +9,6 @@ use Games::Cellulo::Game::Particle;
 use Moo;
 use MooX::Options;
 
-open( my $fh, ">", "$ENV{HOME}/cellulo.log" ) or die "$@ $!";
 has screen => ( is => 'lazy', handles => [qw/ grid /] );
 
 option sleep_time => (
@@ -185,7 +184,6 @@ sub move_particles {
                 $_move->( $_, $wantx, $wanty, $grid );
                 $_->successes_in_direction->{$avoid_dir_string}++;
                 $_->num_successes( $_->num_successes+1 );
-                print $fh $avoid_dir_string,"\n";
                 if( $self->behavior == 3 ) {
                     $_->xdir( $avoid_dir->[0] );
                     $_->ydir( $avoid_dir->[1] );

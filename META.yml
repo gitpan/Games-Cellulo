@@ -31,5 +31,5 @@ requires:
 resources:
   bugtracker: https://github.com/ediblenergy/Games-Cellulo/issues
   repository: https://github.com/ediblenergy/Games-Cellulo.git
-version: 0.21
+version: 0.22
 x_authority: cpan:SKAUFMAN

@@ -1,5 +1,5 @@
 package Games::Cellulo;
-$Games::Cellulo::VERSION = '0.21';
+$Games::Cellulo::VERSION = '0.22';
 =head1 NAME
 
 Games::Cellulo - Cellulo Automatonata
